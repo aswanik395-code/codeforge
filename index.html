@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeForge — Project Hub</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════════════════ -->
+<div id="authScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(135,147,238,0.06) 0%, transparent 60%), var(--bg);">
+
+  <!-- Login Panel -->
+  <div id="authLoginPanel" style="width:100%;max-width:420px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:-1px;">Code<span style="color:var(--text);">Forge</span></div>
+      <div class="text-muted text-sm mt-8">The student project collaboration hub</div>
+    </div>
+    <div class="card" style="box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <h3 style="margin-bottom:20px;color:var(--text);">Sign In</h3>
+      <div id="loginForm"></div>
+    </div>
+  </div>
+
+  <!-- Register Panel -->
+  <div id="authRegisterPanel" class="hidden" style="width:100%;max-width:640px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:-1px;">Code<span style="color:var(--text);">Forge</span></div>
+      <div class="text-muted text-sm mt-8">Create your builder profile</div>
+    </div>
+    <div class="card" style="box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <h3 style="margin-bottom:20px;color:var(--text);">Create Account</h3>
+      <div id="registerForm"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════════════════ -->
+<div id="mainApp" class="hidden">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">⬡ Code<span>Forge</span></div>
+    <div class="nav-links">
+      <button class="nav-btn" data-page="home" onclick="UI.navigate('home')"><span>Home</span></button>
+      <button class="nav-btn" data-page="projects" onclick="UI.navigate('projects')"><span>Projects</span></button>
+      <button class="nav-btn" data-page="dashboard" onclick="UI.navigate('dashboard')"><span>Dashboard</span></button>
+      <button class="nav-btn" data-page="profile" onclick="UI.navigate('profile')"><span>Profile</span></button>
+    </div>
+    <div class="flex gap-8 align-items-center" style="align-items:center;">
+      <!-- Notification Bell -->
+      <button class="notif-btn" id="notifBtn" onclick="Notifications.toggle()" title="Notifications">
+        🔔
+        <span class="notif-badge" id="notifBadge"></span>
+      </button>
+      <!-- Avatar / Logout -->
+      <div id="navAvatar" class="nav-avatar" title="Your Profile" onclick="UI.navigate('profile')"></div>
+      <button class="nav-btn" onclick="Auth.logout()" title="Sign out" style="font-size:16px;padding:6px 10px;">⏻</button>
+    </div>
+  </nav>
+
+  <!-- Notification Panel (dropdown) -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      <span>Notifications</span>
+      <button class="btn btn-ghost btn-sm" onclick="Notifications.markAllRead()">Mark all read</button>
+    </div>
+    <div class="notif-list" id="notifList"></div>
+  </div>
+
+  <!-- Pages -->
+  <main style="padding: 32px 0 64px;">
+
+    <!-- ── HOME ── -->
+    <div id="page-home" class="page">
+      <div class="container">
+        <div id="homeContent"></div>
+      </div>
+    </div>
+
+    <!-- ── PROJECTS ── -->
+    <div id="page-projects" class="page">
+      <div class="container">
+        <!-- Header -->
+        <div class="section-header mb-20">
+          <h2><span class="section-title-accent"></span>Browse Projects</h2>
+          <button class="btn btn-primary" onclick="Projects.openCreate()">+ New Project</button>
+        </div>
+
+        <!-- Search + Filter -->
+        <div class="flex gap-12 mb-16 flex-wrap">
+          <div class="search-bar" style="max-width:400px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search projects or skills..." oninput="Projects.setSearch(this.value)">
+          </div>
+        </div>
+
+        <!-- Category Filter Chips -->
+        <div class="flex gap-8 flex-wrap mb-24" id="catFilters">
+          <!-- rendered by JS -->
+        </div>
+
+        <!-- Project List -->
+        <div id="projectList"></div>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div id="page-dashboard" class="page">
+      <div class="container">
+        <div id="dashboardContent"></div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE ── -->
+    <div id="page-profile" class="page">
+      <div class="container">
+        <div id="profileContent"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Create Project Modal -->
+<div class="modal-overlay" id="createProjectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Create New Project</h3>
+      <button class="modal-close" onclick="UI.closeModal('createProjectModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Project Title *</label>
+        <input class="form-control" id="createTitle" placeholder="e.g. AI Study Companion">
+      </div>
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea class="form-control" id="createDesc" rows="4" placeholder="What's this project about? What problem does it solve? Who is it for?"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Category</label>
+          <select class="form-control" id="createCategory">
+            <option>General</option>
+            <option>AI/ML</option>
+            <option>Web</option>
+            <option>Mobile</option>
+            <option>DevTools</option>
+            <option>Game Dev</option>
+            <option>Data Science</option>
+            <option>Design</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Team Size</label>
+          <select class="form-control" id="createTeamSize">
+            <option value="2">2 people</option>
+            <option value="3">3 people</option>
+            <option value="4" selected>4 people</option>
+            <option value="5">5 people</option>
+            <option value="6">6 people</option>
+            <option value="8">8 people</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Required Skills <span class="text-muted">(select all needed)</span></label>
+        <div id="createSkillChips" class="flex flex-wrap gap-8 mt-8"></div>
+      </div>
+      <div class="flex gap-8 mt-8">
+        <button class="btn btn-primary btn-full" onclick="Projects.saveCreate()">Create Project →</button>
+        <button class="btn btn-ghost" onclick="UI.closeModal('createProjectModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Join Project Modal -->
+<div class="modal-overlay" id="joinProjectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Request to Join</h3>
+      <button class="modal-close" onclick="UI.closeModal('joinProjectModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="joinProjectId">
+      <p class="mb-16">You're requesting to join <strong id="joinProjectTitle" class="text-gold"></strong>.</p>
+      <div class="form-group">
+        <label>Message to Project Creator <span class="text-muted">(optional)</span></label>
+        <textarea class="form-control" id="joinMessage" rows="4" placeholder="Tell them why you want to join, what you bring to the table, or ask any questions..."></textarea>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-primary btn-full" onclick="Projects.submitJoin()">Send Request →</button>
+        <button class="btn btn-ghost" onclick="UI.closeModal('joinProjectModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Project Detail Modal -->
+<div class="modal-overlay" id="projectDetailModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <h3></h3>
+      <button class="modal-close" onclick="UI.closeModal('projectDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="projectDetailBody"></div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <h3>Edit Profile</h3>
+      <button class="modal-close" onclick="UI.closeModal('editProfileModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input class="form-control" id="editName">
+        </div>
+        <div class="form-group">
+          <label>Profile Picture URL</label>
+          <input class="form-control" id="editAvatar" placeholder="https://...">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Department</label>
+          <select class="form-control" id="editDept">
+            <option value="">Select...</option>
+            <option>Computer Science</option>
+            <option>Software Engineering</option>
+            <option>Information Technology</option>
+            <option>Electrical Engineering</option>
+            <option>Mechanical Engineering</option>
+            <option>Data Science</option>
+            <option>Mathematics</option>
+            <option>Physics</option>
+            <option>Design</option>
+            <option>Business</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <select class="form-control" id="editYear">
+            <option value="">Select...</option>
+            <option>1st Year</option>
+            <option>2nd Year</option>
+            <option>3rd Year</option>
+            <option>4th Year</option>
+            <option>Masters</option>
+            <option>PhD</option>
+            <option>Alumni</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Bio</label>
+        <textarea class="form-control" id="editBio" rows="3" placeholder="Tell the community about yourself..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Skills</label>
+        <div id="editSkillChips" class="flex flex-wrap gap-8 mt-8"></div>
+      </div>
+      <div class="flex gap-8 mt-8">
+        <button class="btn btn-primary btn-full" onclick="Profile.saveEdit()">Save Changes</button>
+        <button class="btn btn-ghost" onclick="UI.closeModal('editProfileModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts — order matters -->
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/app.js"></script>
+
+<!-- Inline: Category filter chips init -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cats = ['All', 'AI/ML', 'Web', 'Mobile', 'DevTools', 'Game Dev', 'Data Science', 'Design', 'General'];
+    const el = document.getElementById('catFilters');
+    if (el) {
+      el.innerHTML = cats.map((cat, i) => `
+        <button class="btn btn-ghost btn-sm filter-cat-btn ${i===0?'active-filter':''}"
+          data-cat="${cat}" onclick="Projects.setCategory('${cat}')">
+          ${cat}
+        </button>
+      `).join('');
+    }
+  });
+
+  // Active filter style
+  document.head.insertAdjacentHTML('beforeend', `
+    <style>
+      .filter-cat-btn.active-filter {
+        background: var(--gold-soft);
+        color: var(--gold);
+        border-color: var(--gold-dim);
+      }
+    </style>
+  `);
+</script>
+
+</body>
+</html>
